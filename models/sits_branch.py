@@ -81,9 +81,7 @@ class SITSSegmenter(nn.Module):
     def forward(self, x, batch_positions=None):
         x_enc = self.backbone(x, batch_positions)
         # The output here of the swin encoder have different spatial resolution
-        sits_feats, cls_sits_feat_maps, multi_lvl_cls = self.decode_head(x_enc)
-        return (
-            sits_feats,
-            cls_sits_feat_maps,
-            multi_lvl_cls,
-        )
+        sits_feats, final_feat_map_cls, multi_lvl_cls = self.decode_head(x_enc)
+        
+        return sits_feats, final_feat_map_cls, multi_lvl_cls
+        

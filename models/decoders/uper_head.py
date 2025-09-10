@@ -141,7 +141,7 @@ class UPerHead(nn.Module, metaclass=ABCMeta):
         fpn_outs = torch.cat(fpn_outs, dim=1)
         # The combined multi_levels_feats_out maps at 10m GSD
         output = self.fpn_bottleneck(fpn_outs)
-        classified_sits_feat_maps = self.cls_seg(output)
+        final_feat_map_cls = self.cls_seg(output)
 
         # For Auxiliary Loss calculations at each level of the UperNet
         # Each feature map is classified at 10m resolution
@@ -149,7 +149,7 @@ class UPerHead(nn.Module, metaclass=ABCMeta):
         # STEP: UPSAMPLE ALL THE 4 FEATURES OF DIFFERENT RESOLUTIONS
         # FROM 40m to 10m WITH AN UPSAMPLING FACTOR OF 4X
 
-        multi_levels_classifications = [
+        multi_lvl_cls = [
             self.cls_seg(feature) for feature in multi_levels_feature_maps
         ]
         # torch.Size([4, 512, 40, 40]), torch.Size([4, 13, 40, 40]),
@@ -158,7 +158,7 @@ class UPerHead(nn.Module, metaclass=ABCMeta):
         # The encoder outputs are used for fusion with the aerial images
         # and the decoder outputs are used for the final segmentation map
         return (
-            inputs,
-            classified_sits_feat_maps,
-            multi_levels_classifications,
+            inputs,   # Encoder features used by cross attention fusion model
+            final_feat_map_cls, # Classified final feature map  (10m GSD)
+            multi_lvl_cls,  # Multi-level classified features for auxiliary supervision (10m GSD)
         )

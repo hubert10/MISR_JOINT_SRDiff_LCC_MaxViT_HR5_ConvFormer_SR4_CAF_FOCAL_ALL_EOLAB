@@ -131,12 +131,16 @@ class SRDiffTrainer(Trainer):
             )
 
             # for classification branches
+            # cls_sits - final classified feat maps
+            # multi_outputs - classified multi-level feats
+            # aer_outputs - main decoder logits
+
             cls_sits, multi_outputs, aer_outputs = self.model(
                 img, img_sr, labels, dates, self.config
             )
 
             # Auxiliary losses
-            # The CE loss for the SITS classification branch is done at 1m GSD
+            # The CE loss for the SITS classification branch is done at 6.25m GSD
 
             aux_loss1 = self.criterion_sat(multi_outputs[2], labels_sr)
             aux_loss2 = self.criterion_sat(multi_outputs[1], labels_sr)
@@ -157,7 +161,7 @@ class SRDiffTrainer(Trainer):
 
             # The CE loss for the SITS classification branch is done at 1.6m GSD
             # that combines the loss from the SR-diffusion model and the SITS 
-            #  segmentation branch
+            # segmentation branch
             
             losses["sr"] = hparams["loss_weights_aer_sat"][1] * (
                 losses["sr"] + loss_sat

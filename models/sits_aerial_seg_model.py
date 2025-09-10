@@ -1,13 +1,13 @@
 import torch
 import timm
 from torch import nn
+import torch.nn.functional as F
 import torchvision.transforms as T
 from models.sits_branch import SITSSegmenter
-from models.fusion_module.cross_atts import FFCA
 from utils.hparams import hparams
-import torch.nn.functional as F
 from timm.layers import create_conv2d, create_pool2d
 from models.decoders.unet_former_decoder import UNetFormerDecoder
+from models.fusion_module.aer_cross_sat_atts import FFCA
 
 class SITSAerialSegmenter(nn.Module):
     def __init__(self, gaussian, config):
@@ -80,25 +80,8 @@ class SITSAerialSegmenter(nn.Module):
         self.decoder = UNetFormerDecoder(
             encoder_channels, self.decoder_channels, self.dropout, self.window_size, self.num_classes
         )
-        self.fusion_module = FFCA( aer_channels_list=[128, 256, 512], sits_channels_list=[64, 128, 256], num_heads=8)
+        self.fusion_module = FFCA(aer_channels_list=[128, 256, 512], sits_channels_list=[64, 128, 256], num_heads=8)
 
-    def norm_fused_feats(self, fused_feats_list):
-        # Applies Layer Normalization to each feature map in the list.
-        # across the channel dimension (C), for each pixel, to ensure
-        # that each feature has a stable ans well-scaled value distribution.
-        normalized_feats = []
-        
-        for x in fused_feats_list:
-            B, C, H, W = x.shape
-            # Permute to [B, H, W, C]
-            x_ = x.permute(0, 2, 3, 1)
-            # Apply LayerNorm over channel dimension
-            layer_norm = nn.LayerNorm(C).to(x.device)  # or nn.LayerNorm([C])
-            x_norm = layer_norm(x_)
-            # Permute back to [B, C, H, W]
-            x_norm = x_norm.permute(0, 3, 1, 2)
-            normalized_feats.append(x_norm)
-        return normalized_feats
 
     def forward(
         self,
@@ -110,15 +93,16 @@ class SITSAerialSegmenter(nn.Module):
     ):
       
         h, w = aerial.size()[-2:]
-        # Aerial branch
+        # Aerial branch extracting multi-features with MaxViT encoder
         res0, res1, res2, res3, res4 = self.aerial_net(aerial)
-        # SITS branch
-        output_sen, cls_sits, multi_lvls_outs = self.sits_encoder(img_sr, dates)
-
-        # Fusion FFCA
-        fused_sits_aer_feats = self.fusion_module([res2, res3, res4], output_sen)
-        res2, res3, res4 = self.norm_fused_feats(fused_sits_aer_feats)
         
-        # Decoder
+        # SITS branch extracting multi-features with ConvFormer encoder
+        sen_feats, final_feat_map_cls, multi_lvl_cls = self.sits_encoder(img_sr, dates)
+
+        # Fusion FFCA, cross attention with query from aer and keys and values from SITS
+        res2, res3, res4 = self.fusion_module([res2, res3, res4], sen_feats)
+        
+        # Decoder based on a UNet taken from UnetFormer
         logits = self.decoder(res0, res1, res2, res3, res4, h, w)
-        return cls_sits, multi_lvls_outs, logits
+        
+        return final_feat_map_cls, multi_lvl_cls, logits
