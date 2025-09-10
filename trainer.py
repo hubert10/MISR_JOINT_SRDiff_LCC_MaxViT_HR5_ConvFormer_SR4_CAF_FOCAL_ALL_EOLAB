@@ -64,7 +64,7 @@ class Trainer:
         self.logger = self.build_tensorboard(
             save_dir=hparams["work_dir"], name="tb_logs"
         )
-        d_train, d_val, d_test = load_data(config_data)
+        d_train, d_val, d_test = load_data(config_data, val_percent=config_data["val_percent"])
         self.d_train = d_train
         self.d_val = d_val
         self.d_test = d_test
