@@ -68,13 +68,13 @@ def compute_gradient(img):
         [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]],
         device=img.device,
         dtype=img.dtype,
-    ).reshape(1, 1, 3, 3)
+    ).reshape(1, 1, 3, 3) / 8.0
 
     sobel_y = torch.tensor(
         [[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]],
         device=img.device,
         dtype=img.dtype,
-    ).reshape(1, 1, 3, 3)
+    ).reshape(1, 1, 3, 3) / 8.0
 
     B, C, H, W = img.shape
 
@@ -143,11 +143,11 @@ def compute_gradient_magnitude(image):
     # Define Sobel kernels
     sobel_x = torch.tensor([[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]]).view(
         1, 1, 3, 3
-    )
+    ) / 8.0
 
     sobel_y = torch.tensor([[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]]).view(
         1, 1, 3, 3
-    )
+    ) / 8.0
 
     # Repeat kernels for depthwise conv (1 per channel)
     sobel_x = sobel_x.repeat(C, 1, 1, 1).to(image.device)

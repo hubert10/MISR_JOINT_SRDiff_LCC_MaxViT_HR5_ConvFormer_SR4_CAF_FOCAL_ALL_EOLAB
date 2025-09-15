@@ -25,15 +25,15 @@ misr_ref_image: closest
 misr: true
 sr_scale: 6.25
 
-main_loss_weight: 1.0
-px_loss_weight: 1.0
-grad_px_loss_weight: 1.0
-temp_grad_mag_loss_weight: 1.0
-gray_value_px_loss_weight: 1.0
-
-
-# main_loss_weight: 0.5
+# main_loss_weight: 1.0
 # px_loss_weight: 1.0
-# grad_px_loss_weight: 0.5
-# temp_grad_mag_loss_weight: 0.2
-# gray_value_px_loss_weight: 0.3
+# grad_px_loss_weight: 1.0
+# temp_grad_mag_loss_weight: 1.0
+# gray_value_px_loss_weight: 1.0
+
+
+main_loss_weight: 0.5
+px_loss_weight: 1.0
+grad_px_loss_weight: 0.5
+temp_grad_mag_loss_weight: 0.2
+gray_value_px_loss_weight: 0.3
